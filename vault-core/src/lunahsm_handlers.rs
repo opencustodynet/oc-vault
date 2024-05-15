@@ -7,6 +7,7 @@ use core::ffi::*;
 extern "C" {
     pub fn malloc(__size: u32) -> *mut c_void;
     pub fn free(__ptr: *mut c_void);
+    pub fn memcmp(s1: *const c_void, s2: *const c_void, n: usize) -> i32;
 }
 
 /// The global allocator type.
@@ -31,6 +32,11 @@ fn allocator_error(_layout: Layout) -> ! {
 /// The static global allocator.
 #[global_allocator]
 static GLOBAL_ALLOCATOR: Allocator = Allocator;
+
+#[no_mangle]
+pub extern "C" fn bcmp(s1: *const c_void, s2: *const c_void, n: usize) -> i32 {
+    unsafe { memcmp(s1, s2, n) }
+}
 
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
