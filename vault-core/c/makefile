@@ -45,7 +45,7 @@ DEFINES+=
 
 L_FLAGS +=-Wl,-t
 
-LIBS := -L$(FMLIBDIR) $(addprefix -l,$(FMLIBS)) -L../../target/powerpc-unknown-linux-gnu/release -lvault-core
+LIBS := -L$(FMLIBDIR) $(addprefix -l,$(FMLIBS)) -L../../target/powerpc-unknown-linux-gnu/release -lvault_core
 
 C_FLAGS += -O2
 
