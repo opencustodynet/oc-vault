@@ -1,1 +1,1 @@
-# oc-vault
+# opencustody-vault
