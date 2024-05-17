@@ -1,7 +1,7 @@
 # OpenCustody Vault
 
 ## How to build, run, and test
-Local run with `softhsm`:
+Run with `softhsm`:
 ```bash
 cargo run
 ```
@@ -10,13 +10,13 @@ Build for `softhsm`:
 ```bash
 cargo build
 ```
-Output: `target/debug/vault-proxy`
+output: `target/debug/vault-proxy`
 
 Build `vault-proxy` for Luna HSM:
 ```bash
 cargo build -p vault-proxy --release --features lunahsm
 ```
-Output: `target/release/vault-proxy`
+output: `target/release/vault-proxy`
 
 Build `vault-core` as FM module for Luna HSM:
 ```bash
