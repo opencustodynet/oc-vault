@@ -1,15 +1,5 @@
-##############################################################################
-#
-# Copyright (c) 2018 SafeNet. All rights reserved.
-#
-# This file contains information that is proprietary to SafeNet and may not be
-# distributed or copied without written consent from SafeNet.
-#
-##############################################################################
-
 # default the FMSDK path
 FMSDK?=/usr/safenet/lunafmsdk
-
 LUNASDK=/usr/safenet/lunaclient
 
 # to use gcc from /usr/bin run
