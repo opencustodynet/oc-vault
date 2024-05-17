@@ -19,18 +19,18 @@ rm -r output
 mkdir output
 
 if [ "$1" = "test-softhsm" ]; then
-    (cd vault-api && cargo +nightly test $2 --features softhsm -- --nocapture --test-threads 1)
+    (cd vault-proxy && cargo +nightly test $2 --features softhsm -- --nocapture --test-threads 1)
 elif [ "$1" = "softhsm" ]; then
-    (cd vault-api && cargo +nightly rustc --release --features softhsm)
-    cp target/release/vault-api output/vault-api
+    (cd vault-proxy && cargo +nightly rustc --release --features softhsm)
+    cp target/release/vault-proxy output/vault-proxy
     echo "output: output/"; ls output/;
 elif [ "$1" = "lunahsm" ]; then
     (cd vault-core && cargo +nightly rustc --crate-type staticlib --release --target powerpc-unknown-linux-gnu --features lunahsm)
     (cd vault-core/c && make)
-    (cd vault-api && cargo +nightly rustc --release --features lunahsm)
+    (cd vault-proxy && cargo +nightly rustc --release --features lunahsm)
     check_fm_size vault-core/c/bin-ppc/vault-core.bin
     cp vault-core/c/bin-ppc/vault-core.bin output/vault-core.bin
-    cp target/release/vault-api output/vault-api
+    cp target/release/vault-proxy output/vault-proxy
     echo "output: output/"; ls output/;
 else
     echo "enter test-softhsm [testname] | softhsm | lunahsm"

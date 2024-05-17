@@ -2,7 +2,7 @@
 resolver = "2"
 members = [
     "vault-core",
-    "vault-api"
+    "vault-proxy"
 ]
 
 [workspace.dependencies]
