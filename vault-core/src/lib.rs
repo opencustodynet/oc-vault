@@ -4,13 +4,20 @@
     feature(alloc_error_handler, fmt_internals, lang_items),
     allow(internal_features)
 )]
+extern crate alloc;
+use alloc::format;
 
 mod api;
 #[cfg(feature = "lunahsm")]
 mod lunahsm_handlers;
 
+use alloc::{
+    string::{String, ToString},
+    vec::Vec,
+};
 use api::*;
 use core::{ptr, slice};
+use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
 pub const FM_MAX_BUFFER_SIZE: usize = 1024 * 64;
