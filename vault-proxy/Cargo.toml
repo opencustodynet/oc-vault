@@ -12,5 +12,5 @@ hex = { workspace = true }
 
 [features]
 default = ["softhsm"]
-softhsm = ["vault-core"]
+softhsm = ["vault-core/softhsm"]
 lunahsm = []

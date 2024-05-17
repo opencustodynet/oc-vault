@@ -15,6 +15,7 @@ LUNASDK=/usr/safenet/lunaclient
 # to use gcc from /usr/bin run
 PPWERPC=/opt/eldk-5.6/powerpc-4xx/sysroots/i686-eldk-linux/usr/bin/powerpc-linux
 STRIP=$(PPWERPC)/powerpc-linux-strip
+RELEASE=../../target/powerpc-unknown-linux-gnu/release
 include $(FMSDK)/samples/fmconfig.mk
 
 NAME = vault-core
@@ -22,8 +23,7 @@ NAME = vault-core
 FMTARGETDIR ?= .
 
 ODIR = $(FMTARGETDIR)/obj-ppc
-BDIR = $(FMTARGETDIR)/bin-ppc
-
+BDIR = $(RELEASE)
 
 _OBJS = \
 	hdr.o \
@@ -45,7 +45,7 @@ DEFINES+=
 
 L_FLAGS +=-Wl,-t
 
-LIBS := -L$(FMLIBDIR) $(addprefix -l,$(FMLIBS)) -L../../target/powerpc-unknown-linux-gnu/release -lvault_core
+LIBS := -L$(FMLIBDIR) $(addprefix -l,$(FMLIBS)) -L$(RELEASE) -lvault_core
 
 C_FLAGS += -O2
 

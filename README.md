@@ -1,7 +1,29 @@
-# opencustody-vault
+# OpenCustody Vault
 
-## how to run for softhsm
-run this:
+## How to build, run, and test
+Local run with `softhsm`:
+```bash
+cargo run
+```
+
+Build for `softhsm`:
+```bash
+cargo build
+```
+Output: `target/debug/vault-proxy`
+
+Build `vault-proxy` for Luna HSM:
+```bash
+cargo build -p vault-proxy --release --features lunahsm
+```
+Output: `target/release/vault-proxy`
+
+Build `vault-core` as FM module for Luna HSM:
+```bash
+sh build_fm.sh
+```
+
+Test with `vault-proxy`:
 ```bash
 curl -X POST http://localhost:8000/RemoveVault \
      -H "Content-Type: application/json" \

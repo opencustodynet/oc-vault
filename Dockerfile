@@ -5,6 +5,7 @@ RUN apt-get update && apt-get install alien softhsm opensc iputils-ping sshpass 
 RUN rustup target add powerpc-unknown-linux-gnu
 RUN rustup toolchain install nightly --target powerpc-unknown-linux-gnu
 RUN rustup component add rustfmt clippy
+RUN rustup default nightly
 
 # setup luna sdk
 COPY lunasdk/610-000397-010_SW_Linux_Luna_Client_V10.7.1_RevA.tar /opt
