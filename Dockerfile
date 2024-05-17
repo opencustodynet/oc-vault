@@ -4,7 +4,7 @@ FROM --platform=linux/amd64 rust
 RUN apt-get update && apt-get install alien softhsm opensc iputils-ping sshpass jq xxd gcc-powerpc-linux-gnu -y
 RUN rustup target add powerpc-unknown-linux-gnu
 RUN rustup toolchain install nightly --target powerpc-unknown-linux-gnu
-RUN rustup component add rustfmt clippy
+RUN rustup component add rustfmt clippy --toolchain nightly
 RUN rustup default nightly
 
 # setup luna sdk
