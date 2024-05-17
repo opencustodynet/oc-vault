@@ -1,5 +1,5 @@
 {
-	"name": "oc-vault",
+	"name": "opencustody-vault",
 	"build": {
 		"dockerfile": "../Dockerfile"
 	},
