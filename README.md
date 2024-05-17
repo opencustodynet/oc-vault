@@ -6,19 +6,17 @@ Run with `softhsm`:
 cargo run
 ```
 
-Build for `softhsm`:
+Build for `softhsm` (output: `target/debug/vault-proxy`):
 ```bash
 cargo build
 ```
-output: `target/debug/vault-proxy`
 
-Build `vault-proxy` for Luna HSM:
+Build `vault-proxy` for Luna HSM (output: `target/release/vault-proxy`):
 ```bash
 cargo build -p vault-proxy --release --features lunahsm
 ```
-output: `target/release/vault-proxy`
 
-Build `vault-core` as FM module for Luna HSM:
+Build `vault-core` as a FM module for Luna HSM (output: `target/powerpc-unknown-linux-gnu/release/vault-core.bin`):
 ```bash
 sh build_fm.sh
 ```
