@@ -5,11 +5,12 @@
     allow(internal_features)
 )]
 
+mod api;
 #[cfg(feature = "lunahsm")]
 mod lunahsm_handlers;
 
+use api::*;
 use core::{ptr, slice};
-use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
 pub const FM_MAX_BUFFER_SIZE: usize = 1024 * 64;
@@ -83,12 +84,6 @@ macro_rules! get_or_error {
     };
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-struct Reason {
-    name: String,
-    code: u64,
-}
-
 pub fn dispatcher(data: Vec<u8>) -> Vec<u8> {
     // Deserialize the JSON data into a Value
     let mut request: Value = match serde_json::from_slice(&data) {
@@ -133,14 +128,4 @@ pub fn dispatcher(data: Vec<u8>) -> Vec<u8> {
         }
         Err(e) => get_error_response(&e),
     }
-}
-
-fn add_vault(label: String, id: u64) -> Result<String, String> {
-    let message = format!("Added vault '{}' with ID {}", label, id);
-    Ok(message)
-}
-
-fn remove_vault(label: String, _reasons: Vec<Reason>, _code: u64) -> Result<String, String> {
-    let message = format!("Removed vault '{}'", label);
-    Ok(message)
 }
