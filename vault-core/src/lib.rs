@@ -12,6 +12,7 @@ extern crate alloc;
 use alloc::{
     format,
     string::{String, ToString},
+    vec,
     vec::Vec,
 };
 use core::{ptr, slice};

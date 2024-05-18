@@ -54,6 +54,15 @@ pub fn dispatcher(serialized_request: Vec<u8>) -> Vec<u8> {
             return get_error_response("Missing slot_id");
         }
     };
+
+    #[cfg(feature = "lunahsm")]
+    let slot_id: p11::CK_SLOT_ID = match slot_id.try_into() {
+        Ok(slot_id) => slot_id,
+        Err(_) => {
+            return get_error_response("Invalid slot_id");
+        }
+    };
+
     // Remove the slot_id from serialized_request
     serialized_request.drain(0..8);
 
