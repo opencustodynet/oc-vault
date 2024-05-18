@@ -79,13 +79,13 @@ impl HsmConnection {
             let mut fm_id: u32 = 0;
             let mut embedded_slot_num: u64 = 0;
 
-            let rv = md::initialize(
+            md::initialize(
                 slot_id,
                 &mut adapter_num,
                 &mut embedded_slot_num,
                 FM_NAME,
                 &mut fm_id,
-            );
+            )?;
 
             fm_slot_id = embedded_slot_num;
 
@@ -158,7 +158,7 @@ impl HsmConnection {
             &mut out_len,
             self.adapter_num,
             self.fm_id,
-        );
+        )?;
 
         if out_len as usize > FM_MAX_BUFFER_SIZE {
             return Err(format!(

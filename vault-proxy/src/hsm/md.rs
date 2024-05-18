@@ -44,46 +44,42 @@ pub fn initialize(
     embeddedSlotNum: *mut u64, // OUT
     fm_name: &str,             // IN
     fmid: *mut u32,            // OUT
-) -> u32 {
-    let mut rv: u32;
-
-    unsafe {
-        rv = MD_Initialize();
-
-        if rv != 0 {
-            println!("Error: MD_Initialize failed with {}", rv);
-            return rv;
-        }
-
-        rv = MD_GetHsmIndexForSlot(p11SlotNum, adapterNum);
-        if rv != 0 {
-            println!("Error: MD_GetEmbeddedSlotID returned {}", rv);
-            MD_Finalize();
-            return rv;
-        }
-
-        rv = MD_GetEmbeddedSlotID(p11SlotNum, embeddedSlotNum);
-        if rv != 0 {
-            println!("Error: MD_GetEmbeddedSlotID returned {}", rv);
-            MD_Finalize();
-            return rv;
-        }
-
-        rv = MD_GetFmIdFromName(*adapterNum, fm_name.as_ptr(), fm_name.len() as u32, fmid);
-        if rv != 0 {
-            println!("Error: MD_GetFmIdFromName returned {}", rv);
-            MD_Finalize();
-            return rv;
-        }
+) -> Result<(), String> {
+    let rv = unsafe { MD_Initialize() };
+    if rv != 0 {
+        return Err(format!("MD_Initialize failed with error code: {}", rv));
     }
 
-    return rv;
+    let rv = unsafe { MD_GetHsmIndexForSlot(p11SlotNum, adapterNum) };
+    if rv != 0 {
+        unsafe { MD_Finalize() };
+        return Err(format!(
+            "MD_GetHsmIndexForSlot failed with error code: {}",
+            rv
+        ));
+    }
+
+    let rv = unsafe { MD_GetEmbeddedSlotID(p11SlotNum, embeddedSlotNum) };
+    if rv != 0 {
+        unsafe { MD_Finalize() };
+        return Err(format!(
+            "MD_GetEmbeddedSlotID failed with error code: {}",
+            rv
+        ));
+    }
+
+    let rv =
+        unsafe { MD_GetFmIdFromName(*adapterNum, fm_name.as_ptr(), fm_name.len() as u32, fmid) };
+    if rv != 0 {
+        unsafe { MD_Finalize() };
+        return Err(format!("MD_GetFmIdFromName failed with error code: {}", rv));
+    }
+
+    Ok(())
 }
 
 pub fn finalize() {
-    unsafe {
-        MD_Finalize();
-    }
+    unsafe { MD_Finalize() };
 }
 
 pub fn send(
@@ -93,11 +89,11 @@ pub fn send(
     out_len: &mut u32,
     adapter_num: u32,
     fm_id: u32,
-) -> u32 {
+) -> Result<(), String> {
     let mut request = [MD_Buffer_t::new(); 2];
     let mut response = [MD_Buffer_t::new(); 2];
 
-    let mut recv_len: u32 = 0;
+    let mut response_len: u32 = 0;
     let mut fm_status: u32 = 0;
 
     request[0].pData = in_buf;
@@ -118,15 +114,23 @@ pub fn send(
             request.as_mut_ptr(),
             10000,
             response.as_mut_ptr(),
-            &mut recv_len,
+            &mut response_len,
             &mut fm_status,
         )
     };
-    if rv != 0 || fm_status != 0 {
-        println!("FAILED with rv = {}, fm_status = {}", rv, fm_status);
-        return if rv != 0 { rv } else { fm_status };
-    } else {
-        *out_len = recv_len;
+
+    if rv != 0 {
+        return Err(format!("MD_SendReceive failed with error code: {}", rv));
     }
-    return rv;
+
+    if fm_status != 0 {
+        return Err(format!(
+            "MD_SendReceive failed with fm status: {}",
+            fm_status
+        ));
+    }
+
+    *out_len = response_len;
+
+    Ok(())
 }
