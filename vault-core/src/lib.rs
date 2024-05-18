@@ -17,8 +17,7 @@ use alloc::{
 use core::{ptr, slice};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-
-pub const FM_MAX_BUFFER_SIZE: usize = 1024 * 64;
+use shared::{p11, FM_MAX_BUFFER_SIZE};
 
 pub fn handler(in_buf: *mut u8, in_len: u32, out_buf: *mut u8, out_len: &mut u32) -> u32 {
     let serialized_response = if in_len as usize > FM_MAX_BUFFER_SIZE {

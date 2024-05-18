@@ -1,9 +1,8 @@
 use super::*;
+use core::ffi::c_ulong;
 
-mod add_vault;
-use add_vault::add_vault;
-mod remove_vault;
-use remove_vault::remove_vault;
+mod get_random;
+use get_random::get_random;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Reason {
@@ -40,9 +39,39 @@ macro_rules! get_or_error {
     };
 }
 
-pub fn dispatcher(data: Vec<u8>) -> Vec<u8> {
+pub fn dispatcher(serialized_request: Vec<u8>) -> Vec<u8> {
+    // Extract slot_id from the serialized_request
+    let mut serialized_request = serialized_request;
+    let slot_id = match serialized_request.get(0..8) {
+        Some(slot_id_bytes) => u64::from_be_bytes(match slot_id_bytes.try_into() {
+            Ok(slot_id_bytes) => slot_id_bytes,
+            Err(_) => {
+                return get_error_response("Invalid slot_id");
+            }
+        }),
+        None => {
+            return get_error_response("Missing slot_id");
+        }
+    };
+    // Remove the slot_id from serialized_request
+    serialized_request.drain(0..8);
+
+    let mut session: p11::CK_SESSION_HANDLE = 0;
+    let rv = unsafe {
+        p11::C_OpenSession(
+            slot_id,
+            p11::CKF_SERIAL_SESSION | p11::CKF_RW_SESSION,
+            ptr::null_mut(),
+            None,
+            &mut session,
+        )
+    };
+    if rv != p11::CKR_OK {
+        return get_error_response(&format!("C_OpenSession failed with error code: {}", rv));
+    }
+
     // Deserialize the JSON data into a Value
-    let mut request: Value = match serde_json::from_slice(&data) {
+    let mut request: Value = match serde_json::from_slice(&serialized_request) {
         Ok(req) => req,
         Err(e) => {
             return get_error_response(&format!("Failed to deserialize request: {}", e));
@@ -62,16 +91,9 @@ pub fn dispatcher(data: Vec<u8>) -> Vec<u8> {
 
     // Handle the request based on the function_name
     let response = match function_name.as_str() {
-        "AddVault" => {
-            let label = get_or_error!(request, "label", String);
-            let id = get_or_error!(request, "id", u64);
-            add_vault(label, id)
-        }
-        "RemoveVault" => {
-            let label = get_or_error!(request, "label", String);
-            let reasons = get_or_error!(request, "reasons", Vec<Reason>);
-            let code = get_or_error!(request, "code", u64);
-            remove_vault(label, reasons, code)
+        "get_random" => {
+            let size = get_or_error!(request, "size", u8);
+            get_random(session, size)
         }
         _ => Err("Unsupported function".to_string()),
     };
