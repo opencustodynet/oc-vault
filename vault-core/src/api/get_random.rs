@@ -18,3 +18,14 @@ pub fn get_random(session: p11::CK_SESSION_HANDLE, size: u8) -> Result<String, S
 
     Ok(random_data_str)
 }
+
+#[test]
+fn test_get_random() {
+    let session = utils::test::get_session().unwrap();
+
+    let size = 8;
+    let result = get_random(session, size);
+    assert!(result.is_ok());
+    let random_data = hex::decode(result.unwrap()).unwrap();
+    assert_eq!(random_data.len(), size as usize);
+}

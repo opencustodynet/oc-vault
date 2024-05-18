@@ -1,18 +1,24 @@
 # OpenCustody Vault
 
 ## How to build, run, and test
-To run with `softhsm`, initialize `softhsm` for one time:
+To use `softhsm`, initialize `softhsm` for one time:
 ```bash
 sh init_softhsm.sh
 ```
-and run `vault-proxy` for `softhsm`:
+
+Test with `softhsm`:
 ```bash
-cargo run
+cargo test --features softhsm
+```
+
+Run `vault-proxy` for `softhsm`:
+```bash
+cargo run --features softhsm
 ```
 
 Build for `softhsm` (output: `target/debug/vault-proxy`):
 ```bash
-cargo build
+cargo build --features softhsm
 ```
 
 Build `vault-proxy` for Luna HSM (output: `target/release/vault-proxy`):

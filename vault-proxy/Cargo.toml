@@ -12,6 +12,5 @@ serde_json = { workspace = true }
 hex = { workspace = true }
 
 [features]
-default = ["softhsm"]
 softhsm = ["vault-core/softhsm"]
 lunahsm = []

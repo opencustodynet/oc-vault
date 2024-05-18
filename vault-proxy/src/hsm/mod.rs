@@ -85,8 +85,7 @@ impl HsmConnection {
                 &mut embedded_slot_num,
                 FM_NAME,
                 &mut fm_id,
-            )
-            .into();
+            );
 
             fm_slot_id = embedded_slot_num;
 
@@ -153,8 +152,8 @@ impl HsmConnection {
 
         #[cfg(feature = "lunahsm")]
         md::send(
-            serialized.as_mut_ptr(),
-            serialized.len() as u32,
+            serialized_request.as_mut_ptr(),
+            serialized_request.len() as u32,
             out_buf.as_mut_ptr(),
             &mut out_len,
             self.adapter_num,
