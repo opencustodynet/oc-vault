@@ -100,20 +100,28 @@ pub fn dispatcher(serialized_request: Vec<u8>) -> Vec<u8> {
     request.as_object_mut().unwrap().remove("function_name");
 
     // Handle the request based on the function_name
-    let response = match function_name.as_str() {
+    match function_name.as_str() {
         "get_random" => {
             let size = get_or_error!(request, "size", u8);
-            get_random(session, size)
+            match get_random(session, size) {
+                Ok(random) => get_ok_response(json!({ "random": random })),
+                Err(e) => get_error_response(&e),
+            }
         }
-        _ => Err("Unsupported function".to_string()),
-    };
-
-    // Convert the response to JSON and serialize it
-    match response {
-        Ok(msg) => {
-            let response_json = json!({ "message": msg });
-            serde_json::to_vec(&response_json).unwrap()
-        }
-        Err(e) => get_error_response(&e),
+        _ => get_error_response("Unsupported function"),
     }
+}
+
+pub fn get_error_response(message: &str) -> Vec<u8> {
+    let error_response = json!({ "status": "error", "reason": message });
+    serde_json::to_vec(&error_response).unwrap()
+}
+
+fn get_ok_response(response_json: Value) -> Vec<u8> {
+    let mut response_json = response_json;
+    response_json
+        .as_object_mut()
+        .unwrap()
+        .insert("status".to_string(), json!("ok"));
+    serde_json::to_vec(&response_json).unwrap()
 }

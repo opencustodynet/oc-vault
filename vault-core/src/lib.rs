@@ -22,7 +22,7 @@ use shared::{p11, FM_MAX_BUFFER_SIZE};
 
 pub fn handler(in_buf: *mut u8, in_len: u32, out_buf: *mut u8, out_len: &mut u32) -> u32 {
     let serialized_response = if in_len as usize > FM_MAX_BUFFER_SIZE {
-        get_error_response(&format!(
+        api::get_error_response(&format!(
             "HSM buffer size limit is {} but serialized request size is {}",
             FM_MAX_BUFFER_SIZE, in_len
         ))
@@ -33,7 +33,7 @@ pub fn handler(in_buf: *mut u8, in_len: u32, out_buf: *mut u8, out_len: &mut u32
         let serialized_response = api::dispatcher(serialized_request);
 
         if serialized_response.len() > FM_MAX_BUFFER_SIZE {
-            get_error_response(&format!(
+            api::get_error_response(&format!(
                 "HSM buffer size limit is {} but serialized response size is {}",
                 FM_MAX_BUFFER_SIZE,
                 serialized_response.len()
@@ -53,9 +53,4 @@ pub fn handler(in_buf: *mut u8, in_len: u32, out_buf: *mut u8, out_len: &mut u32
     *out_len = serialized_response.len() as u32;
 
     0
-}
-
-fn get_error_response(message: &str) -> Vec<u8> {
-    let error_response = json!({ "error": message });
-    serde_json::to_vec(&error_response).unwrap()
 }
