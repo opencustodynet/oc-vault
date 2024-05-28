@@ -1,6 +1,12 @@
 # OpenCustody Vault
 
 ## How to build, run, and test
+### Build for softhsm
+Build for `softhsm` (output: `target/debug/vault-proxy`):
+```bash
+cargo build --features softhsm
+```
+### Test with softhsm
 To use `softhsm`, initialize `softhsm` for one time:
 ```bash
 sh init_softhsm.sh
@@ -16,11 +22,12 @@ Run `vault-proxy` for `softhsm`:
 cargo run --features softhsm
 ```
 
-Build for `softhsm` (output: `target/debug/vault-proxy`):
+Test with `vault-proxy`:
 ```bash
-cargo build --features softhsm
+curl -X POST http://localhost:8000/get_random -H "Content-Type: application/json" -d '{"size": 10}'
 ```
 
+### Build for lunahsm
 Build `vault-proxy` for Luna HSM (output: `target/release/vault-proxy`):
 ```bash
 cargo build -p vault-proxy --release --features lunahsm
@@ -31,7 +38,20 @@ Build `vault-core` as a FM module for Luna HSM (output: `target/powerpc-unknown-
 sh build_fm.sh
 ```
 
-Test with `vault-proxy`:
+### Test with lunahsm
+Build a test binary for `vault-proxy` to run it on a test machine that has Luna PCIe HSM:
 ```bash
-curl -X POST http://localhost:8000/get_random -H "Content-Type: application/json" -d '{"size": 10}'
+cargo test -p vault-proxy --no-run --features lunahsm
+...
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 10s
+  Executable unittests src/main.rs (target/debug/deps/vault_proxy-c09aef4c34f69215)
+```
+In this case, the output test binary is `vault_proxy-c09aef4c34f69215`. Rename it to `vault_proxy_test`:
+```bash
+mv vault_proxy-c09aef4c34f69215 vault_proxy_test
+```
+
+Then, copy `test_lunahsm.sh`, `vault-core.bin` and `vault_proxy_test` to the test machine that has Luna PCIe HSM, and run:
+```bash
+sh test_lunahsm.sh
 ```
