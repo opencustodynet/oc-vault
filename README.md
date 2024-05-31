@@ -1,4 +1,4 @@
-![Logo](https://github.com/opencustodynet/opencustody-vault/blob/main/logo.png)
+<img src="https://github.com/opencustodynet/opencustody-vault/blob/main/logo.png" alt="Logo" width="200"/>
 # OpenCustody Vault
 
 ## How to build, run, and test
