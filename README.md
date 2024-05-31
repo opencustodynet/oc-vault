@@ -1,8 +1,8 @@
-<picture>
+<!-- <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://github.com/opencustodynet/opencustody-vault/blob/main/logo-dark.png">
-  <source media="(prefers-color-scheme: light)" srcset="https://github.com/opencustodynet/opencustody-vault/blob/main/logo.png">
+  <source media="(prefers-color-scheme: light)" srcset="https://github.com/opencustodynet/opencustody-vault/blob/main/logo.png"> -->
   <img src="https://github.com/opencustodynet/opencustody-vault/blob/main/logo.png" alt="Logo" width="200"/>
-</picture>
+<!-- </picture> -->
 
 # OpenCustody Vault
 
