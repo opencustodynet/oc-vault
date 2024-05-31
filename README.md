@@ -1,3 +1,4 @@
+![Logo](https://github.com/opencustodynet/opencustody-vault/blob/main/logo.png)
 # OpenCustody Vault
 
 ## How to build, run, and test
