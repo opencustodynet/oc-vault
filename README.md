@@ -1,9 +1,3 @@
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/opencustodynet/opencustody-vault/blob/main/logo-dark.png">
-  <source media="(prefers-color-scheme: light)" srcset="https://github.com/opencustodynet/opencustody-vault/blob/main/logo.png">
-  <img src="https://github.com/opencustodynet/opencustody-vault/blob/main/logo.png" alt="Logo" width="200"/>
-</picture>
-
 # OpenCustody Vault
 
 ## How to build, run, and test
