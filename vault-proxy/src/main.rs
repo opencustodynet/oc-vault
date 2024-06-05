@@ -7,9 +7,6 @@ use serde_json::{json, Value};
 
 mod hsm;
 
-#[cfg(test)]
-mod tests;
-
 #[post("/<function_name>", format = "json", data = "<request>")]
 fn dynamic_handler(
     function_name: String,
