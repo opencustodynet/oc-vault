@@ -6,12 +6,8 @@ Build for `softhsm` (output: `target/debug/vault-proxy`):
 ```bash
 cargo build --features softhsm
 ```
-### Test with softhsm
-To use `softhsm`, initialize `softhsm` for one time:
-```bash
-sh init_softhsm.sh
-```
 
+### Test with softhsm
 Test with `softhsm`:
 ```bash
 cargo test --features softhsm

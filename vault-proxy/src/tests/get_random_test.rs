@@ -2,6 +2,9 @@ use super::*;
 
 #[test]
 fn get_random_test() {
+    let session = shared::test_hsm::init().unwrap();
+    shared::test_hsm::close(session).unwrap();
+
     let rocket = rocket();
     let client = Client::tracked(rocket).expect("No valid rocket instance");
     let response = client

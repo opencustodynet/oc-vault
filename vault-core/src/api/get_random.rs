@@ -21,7 +21,7 @@ pub fn get_random(session: p11::CK_SESSION_HANDLE, size: u8) -> Result<String, S
 
 #[test]
 fn test_get_random() {
-    let session = utils::test::get_session().unwrap();
+    let session = shared::test_hsm::init().unwrap();
 
     let size = 8;
     let result = get_random(session, size);
