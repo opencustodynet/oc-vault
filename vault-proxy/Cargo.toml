@@ -13,4 +13,5 @@ hex = { workspace = true }
 
 [features]
 softhsm = ["vault-core/softhsm"]
-lunahsm = []
+lunahsm = ["vault-core/lunahsm"]
+lunahsm_fm = []

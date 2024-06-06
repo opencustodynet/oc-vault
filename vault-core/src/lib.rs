@@ -1,12 +1,12 @@
 #![cfg_attr(
-    feature = "lunahsm",
+    feature = "lunahsm_fm",
     no_std,
     feature(alloc_error_handler, fmt_internals, lang_items),
     allow(internal_features)
 )]
 mod api;
-#[cfg(feature = "lunahsm")]
-mod lunahsm_handlers;
+#[cfg(feature = "lunahsm_fm")]
+mod fm_handlers;
 
 extern crate alloc;
 use alloc::{

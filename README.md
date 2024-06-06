@@ -1,43 +1,41 @@
 # OpenCustody Vault
 
-## How to build, run, and test
-### Build for softhsm
-Build for `softhsm` (output: `target/debug/vault-proxy`):
-```bash
-cargo build --features softhsm
-```
-
-### Test with softhsm
-Test with `softhsm`:
+## Softhsm (simulation)
+Test with `softhsm` using this command:
 ```bash
 cargo test --features softhsm
 ```
 
-Run `vault-proxy` for `softhsm`:
+You can also build for `softhsm` (output: `target/debug/vault-proxy`) using this command:
 ```bash
-cargo run --features softhsm
+cargo build --features softhsm
 ```
 
-Test with `vault-proxy`:
+## Luna HSM
+If your development machine is connected to a Luna HSM, you can use this command to directly test with `lunahsm`:
 ```bash
-curl -X POST http://localhost:8000/get_random -H "Content-Type: application/json" -d '{"size": 10}'
+cargo test --features lunahsm
 ```
 
-### Build for lunahsm
-Build `vault-proxy` for Luna HSM (output: `target/release/vault-proxy`):
+However, if your machine is not connected to a Luna HSM, you can use this command to build a test binrary, and run it on a machine that is connected to a Luna HSM:
 ```bash
-cargo build -p vault-proxy --release --features lunahsm
+cargo test --features lunahsm --no-run
 ```
 
-Build `vault-core` as a FM module for Luna HSM (output: `target/powerpc-unknown-linux-gnu/release/vault-core.bin`):
+build for `lunahsm` (output: `target/debug/vault-proxy`):
+```bash
+cargo build --features lunahsm
+```
+
+## Luna HSM Firmware (FM)
+Then, you can build `vault-core` as a FM module for Luna HSM using `build_fm.sh` script (output: `target/powerpc-unknown-linux-gnu/release/vault-core.bin`). This script compiles `vault-core` as a static library for powerpc, links it to the basic FM C library and builds it, and finally checks the final binary size to be sure that it is less than the Luna FM max size (8 MB).
 ```bash
 sh build_fm.sh
 ```
 
-### Test with lunahsm
-Build a test binary for `vault-proxy` to run it on a test machine that has Luna PCIe HSM:
+To test with a Luna HSM, build a test binary for `vault-proxy` to run it on a test machine that has Luna PCIe HSM:
 ```bash
-cargo test -p vault-proxy --no-run --features lunahsm
+cargo test -p vault-proxy --no-run --features lunahsm_fm
 ...
     Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 10s
   Executable unittests src/main.rs (target/debug/deps/vault_proxy-c09aef4c34f69215)
@@ -47,7 +45,12 @@ In this case, the output test binary is `vault_proxy-c09aef4c34f69215`. Rename i
 mv vault_proxy-c09aef4c34f69215 vault_proxy_test
 ```
 
-Then, copy `test_lunahsm.sh`, `vault-core.bin` and `vault_proxy_test` to the test machine that has Luna PCIe HSM, and run:
+Then, copy `test_lunahsm.sh`, `vault-core.bin` and `vault_proxy_test` to the test machine that has Luna PCIe HSM, and run this command:
 ```bash
 sh test_lunahsm.sh
+```
+
+To build `vault-proxy` release for Luna HSM FM, you can use this command (output: `target/release/vault-proxy`):
+```bash
+cargo build -p vault-proxy --release --features lunahsm_fm
 ```

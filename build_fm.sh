@@ -13,6 +13,6 @@ check_fm_size() {
     fi
 }
 
-cargo rustc -p vault-core --crate-type staticlib --release --target powerpc-unknown-linux-gnu --features lunahsm
-make -C vault-core/c
+cargo rustc -p vault-core --crate-type staticlib --release --target powerpc-unknown-linux-gnu --features lunahsm_fm
+make -C vault-core/fm
 check_fm_size target/powerpc-unknown-linux-gnu/release/vault-core.bin

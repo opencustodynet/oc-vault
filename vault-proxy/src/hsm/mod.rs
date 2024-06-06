@@ -1,24 +1,24 @@
 use core::ptr;
-#[cfg(feature = "lunahsm")]
+#[cfg(feature = "lunahsm_fm")]
 use core::slice;
 use serde_json::{json, Value};
 use shared::p11;
-#[cfg(feature = "lunahsm")]
+#[cfg(feature = "lunahsm_fm")]
 use shared::FM_MAX_BUFFER_SIZE;
 
-#[cfg(feature = "lunahsm")]
+#[cfg(feature = "lunahsm_fm")]
 mod md;
 
-#[cfg(feature = "lunahsm")]
+#[cfg(feature = "lunahsm_fm")]
 const FM_NAME: &str = "opencustody_fm";
 
 pub struct HsmConnection {
     session: u64,
-    #[cfg(feature = "lunahsm")]
+    #[cfg(feature = "lunahsm_fm")]
     fm_slot_id: u64,
-    #[cfg(feature = "lunahsm")]
+    #[cfg(feature = "lunahsm_fm")]
     adapter_num: u32,
-    #[cfg(feature = "lunahsm")]
+    #[cfg(feature = "lunahsm_fm")]
     fm_id: u32,
 }
 
@@ -61,10 +61,10 @@ impl HsmConnection {
             return Err(format!("C_Login failed with error code: {}", rv));
         }
 
-        #[cfg(feature = "softhsm")]
+        #[cfg(not(feature = "lunahsm_fm"))]
         let hsm_connection = Self { session };
 
-        #[cfg(feature = "lunahsm")]
+        #[cfg(feature = "lunahsm_fm")]
         let hsm_connection = {
             let mut adapter_num: u32 = 0;
             let mut fm_id: u32 = 0;
@@ -102,7 +102,7 @@ impl HsmConnection {
             return Err(format!("C_CloseSession failed with error code: {}", rv));
         }
 
-        #[cfg(feature = "lunahsm")]
+        #[cfg(feature = "lunahsm_fm")]
         md::finalize();
 
         let rv = unsafe { p11::C_Finalize(ptr::null_mut()) };
@@ -113,12 +113,12 @@ impl HsmConnection {
         Ok(())
     }
 
-    #[cfg(feature = "softhsm")]
+    #[cfg(not(feature = "lunahsm_fm"))]
     pub fn send(&self, request_json: Value) -> Value {
         vault_core::dispatch(self.session, request_json)
     }
 
-    #[cfg(feature = "lunahsm")]
+    #[cfg(feature = "lunahsm_fm")]
     pub fn send(&self, request_json: Value) -> Value {
         // Serialize the modified request to JSON
         let mut serialized_request = match serde_json::to_vec(&request_json) {
