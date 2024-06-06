@@ -13,44 +13,85 @@ use alloc::{
     format,
     string::{String, ToString},
     vec,
-    vec::Vec,
 };
-use core::{ptr, slice};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use shared::{p11, FM_MAX_BUFFER_SIZE};
+use shared::p11;
 
-pub fn handler(in_buf: *mut u8, in_len: u32, out_buf: *mut u8, out_len: &mut u32) -> u32 {
-    let serialized_response = if in_len as usize > FM_MAX_BUFFER_SIZE {
-        api::get_error_response(&format!(
-            "HSM buffer size limit is {} but serialized request size is {}",
-            FM_MAX_BUFFER_SIZE, in_len
-        ))
-    } else {
-        let in_buf = unsafe { slice::from_raw_parts(in_buf, in_len as usize) };
-        let serialized_request = in_buf.to_vec();
+#[derive(Debug, Serialize, Deserialize)]
+struct Reason {
+    name: String,
+    code: u64,
+}
 
-        let serialized_response = api::dispatcher(serialized_request);
+macro_rules! get_or_error {
+    ($request:expr, $field:expr, $type:ty) => {
+        match $request.get($field) {
+            Some(value) => match serde_json::from_value::<$type>(value.clone()) {
+                Ok(valid_value) => valid_value,
+                Err(_) => return get_error_response(&format!("Invalid {}", $field)),
+            },
+            None => return get_error_response(&format!("Missing {}", $field)),
+        }
+    };
+    ($request:expr, $field:expr, Vec<$type:ty>) => {
+        match $request.get($field) {
+            Some(value) => value
+                .as_array()
+                .unwrap_or_else(|| {
+                    return get_error_response(&format!("{} is not an array", $field));
+                })
+                .iter()
+                .map(|v| {
+                    serde_json::from_value::<$type>(v.clone()).unwrap_or_else(|_| {
+                        return get_error_response(&format!("Invalid {}", $field));
+                    })
+                })
+                .collect::<Vec<$type>>(),
+            None => return get_error_response(&format!("Missing {}", $field)),
+        }
+    };
+}
 
-        if serialized_response.len() > FM_MAX_BUFFER_SIZE {
-            api::get_error_response(&format!(
-                "HSM buffer size limit is {} but serialized response size is {}",
-                FM_MAX_BUFFER_SIZE,
-                serialized_response.len()
-            ))
-        } else {
-            serialized_response
+pub fn dispatch(session: p11::CK_SESSION_HANDLE, request_json: Value) -> Value {
+    let mut request_json = request_json;
+
+    // Extract function_name from the JSON
+    let function_name = match request_json["function_name"].as_str() {
+        Some(name) => name.to_string(),
+        None => {
+            return get_error_response("Missing function_name");
         }
     };
 
-    unsafe {
-        ptr::copy(
-            serialized_response.as_ptr(),
-            out_buf,
-            serialized_response.len(),
-        );
-    }
-    *out_len = serialized_response.len() as u32;
+    // Remove function_name from the request
+    request_json
+        .as_object_mut()
+        .unwrap()
+        .remove("function_name");
 
-    0
+    // Handle the request based on the function_name
+    match function_name.as_str() {
+        "get_random" => {
+            let size = get_or_error!(request_json, "size", u8);
+            match api::get_random(session, size) {
+                Ok(random) => get_ok_response(json!({ "random": random })),
+                Err(e) => get_error_response(&e),
+            }
+        }
+        _ => get_error_response("Unsupported function"),
+    }
+}
+
+pub fn get_error_response(message: &str) -> Value {
+    json!({ "status": "error", "reason": message })
+}
+
+fn get_ok_response(response_json: Value) -> Value {
+    let mut response_json = response_json;
+    response_json
+        .as_object_mut()
+        .unwrap()
+        .insert("status".to_string(), json!("ok"));
+    response_json
 }

@@ -1,6 +1,10 @@
 use core::ptr;
+#[cfg(feature = "lunahsm")]
 use core::slice;
-use shared::{p11, FM_MAX_BUFFER_SIZE};
+use serde_json::{json, Value};
+use shared::p11;
+#[cfg(feature = "lunahsm")]
+use shared::FM_MAX_BUFFER_SIZE;
 
 #[cfg(feature = "lunahsm")]
 mod md;
@@ -10,6 +14,7 @@ const FM_NAME: &str = "opencustody_fm";
 
 pub struct HsmConnection {
     session: u64,
+    #[cfg(feature = "lunahsm")]
     fm_slot_id: u64,
     #[cfg(feature = "lunahsm")]
     adapter_num: u32,
@@ -17,13 +22,12 @@ pub struct HsmConnection {
     fm_id: u32,
 }
 
-pub enum UserType {
-    NU,
-    CU,
-}
-
 impl HsmConnection {
-    pub fn open(token_label: &str, token_pin: &str, user_type: UserType) -> Result<Self, String> {
+    pub fn open(
+        token_label: &str,
+        token_pin: &str,
+        user_type: p11::CK_USER_TYPE,
+    ) -> Result<Self, String> {
         let rv = unsafe { p11::C_Initialize(ptr::null_mut()) };
         if rv != p11::CKR_OK {
             return Err(format!("C_Initialize failed with error code: {}", rv));
@@ -45,10 +49,6 @@ impl HsmConnection {
             return Err(format!("C_OpenSession failed with error code: {}", rv));
         }
 
-        let user_type = match user_type {
-            UserType::NU => p11::CKU_USER,
-            UserType::CU => p11::CKU_CRYPTO_USER,
-        };
         let rv = unsafe {
             p11::C_Login(
                 session,
@@ -61,33 +61,22 @@ impl HsmConnection {
             return Err(format!("C_Login failed with error code: {}", rv));
         }
 
-        let fm_slot_id: u64;
-
         #[cfg(feature = "softhsm")]
-        let hsm_connection = {
-            fm_slot_id = slot_id;
-
-            Self {
-                session,
-                fm_slot_id,
-            }
-        };
+        let hsm_connection = Self { session };
 
         #[cfg(feature = "lunahsm")]
         let hsm_connection = {
             let mut adapter_num: u32 = 0;
             let mut fm_id: u32 = 0;
-            let mut embedded_slot_num: u64 = 0;
+            let mut fm_slot_id: u64 = 0;
 
             md::initialize(
                 slot_id,
                 &mut adapter_num,
-                &mut embedded_slot_num,
+                &mut fm_slot_id,
                 FM_NAME,
                 &mut fm_id,
             )?;
-
-            fm_slot_id = embedded_slot_num;
 
             Self {
                 session,
@@ -124,15 +113,25 @@ impl HsmConnection {
         Ok(())
     }
 
-    pub fn send(&self, serialized_request: Vec<u8>) -> Result<String, String> {
-        let mut serialized_request = serialized_request;
+    #[cfg(feature = "softhsm")]
+    pub fn send(&self, request_json: Value) -> Value {
+        vault_core::dispatch(self.session, request_json)
+    }
+
+    #[cfg(feature = "lunahsm")]
+    pub fn send(&self, request_json: Value) -> Value {
+        // Serialize the modified request to JSON
+        let mut serialized_request = match serde_json::to_vec(&request_json) {
+            Ok(data) => data,
+            Err(e) => return get_error_response(format!("Error serializing request: {}", e)),
+        };
 
         // Prepend fm_slot_id bytes to the beginning of serialized_request
         serialized_request.splice(0..0, self.fm_slot_id.to_be_bytes().iter().cloned());
 
         // Send this serialized data to the HSM
         if serialized_request.len() > FM_MAX_BUFFER_SIZE {
-            return Err(format!(
+            return get_error_response(format!(
                 "HSM buffer size limit is {} but serialized request size is {}",
                 FM_MAX_BUFFER_SIZE,
                 serialized_request.len()
@@ -142,26 +141,20 @@ impl HsmConnection {
         let mut out_buf: [u8; FM_MAX_BUFFER_SIZE] = [0; FM_MAX_BUFFER_SIZE];
         let mut out_len: u32 = 0;
 
-        #[cfg(feature = "softhsm")]
-        let _rv = vault_core::handler(
-            serialized_request.as_mut_ptr(),
-            serialized_request.len() as u32,
-            out_buf.as_mut_ptr(),
-            &mut out_len,
-        );
-
-        #[cfg(feature = "lunahsm")]
-        md::send(
+        match md::send(
             serialized_request.as_mut_ptr(),
             serialized_request.len() as u32,
             out_buf.as_mut_ptr(),
             &mut out_len,
             self.adapter_num,
             self.fm_id,
-        )?;
+        ) {
+            Ok(_) => (),
+            Err(e) => return get_error_response(e),
+        }
 
         if out_len as usize > FM_MAX_BUFFER_SIZE {
-            return Err(format!(
+            return get_error_response(format!(
                 "HSM buffer size limit is {} but serialized response size is {}",
                 FM_MAX_BUFFER_SIZE, out_len
             ));
@@ -171,10 +164,18 @@ impl HsmConnection {
         let serialized_response = out_buf_slice.to_vec();
 
         // Deserialize the response bytes to JSON
-        match String::from_utf8(serialized_response) {
-            Ok(serialized_response_str) => Ok(serialized_response_str),
-            Err(_) => Err("Invalid UTF-8 response".to_string()),
-        }
+        let serialized_response_str = match String::from_utf8(serialized_response) {
+            Ok(serialized_response_str) => serialized_response_str,
+            Err(_) => return get_error_response("Invalid UTF-8 response".to_string()),
+        };
+
+        // Parse the response string into a JSON value
+        let response_json = match serde_json::from_str(&serialized_response_str) {
+            Ok(json) => json,
+            Err(e) => return get_error_response(format!("Error parsing response from HSM: {}", e)),
+        };
+
+        response_json
     }
 
     fn find_slot_id(search_label: &str) -> Result<u64, String> {
@@ -206,4 +207,8 @@ impl HsmConnection {
 
         Err(format!("slot with name {} not found", search_label))
     }
+}
+
+pub fn get_error_response(message: String) -> Value {
+    json!({ "status": "error", "reason": message })
 }

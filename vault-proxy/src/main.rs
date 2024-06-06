@@ -4,6 +4,7 @@ use rocket::http::Status;
 use rocket::response::status;
 use rocket::serde::json::Json;
 use serde_json::{json, Value};
+use shared::p11;
 
 mod hsm;
 
@@ -16,68 +17,33 @@ fn dynamic_handler(
     request: Json<Value>,
     hsm_connection: &rocket::State<hsm::HsmConnection>,
 ) -> Result<String, status::Custom<String>> {
-    let mut request_with_function_name = request.into_inner();
-    request_with_function_name["function_name"] = json!(function_name);
+    let mut request = request.into_inner();
+    request["function_name"] = json!(function_name);
 
-    // Serialize the modified request to JSON
-    let serialized_request = match serde_json::to_vec(&request_with_function_name) {
-        Ok(data) => data,
-        Err(e) => {
-            return Err(get_error_response(format!(
-                "Error serializing request: {}",
-                e
-            )))
+    let response_json = hsm_connection.send(request);
+    // Check if the JSON value is error
+    if let Some(status) = response_json.get("status") {
+        if status == "error" {
+            return Err(status::Custom(
+                Status::InternalServerError,
+                response_json.to_string(),
+            ));
+        } else {
+            return Ok(response_json.to_string());
         }
-    };
-
-    match hsm_connection.send(serialized_request) {
-        Err(e) => Err(get_error_response(format!(
-            "Error sending request to HSM: {}",
-            e
-        ))),
-        Ok(serialized_response_str) => {
-            // Parse the response string into a JSON value
-            let response_json: Value = match serde_json::from_str(&serialized_response_str) {
-                Ok(json) => json,
-                Err(e) => {
-                    return Err(get_error_response(format!(
-                        "Error parsing response from HSM: {}",
-                        e
-                    )));
-                }
-            };
-
-            // Check if the JSON value is error
-            if let Some(status) = response_json.get("status") {
-                if status == "error" {
-                    return Err(status::Custom(
-                        Status::InternalServerError,
-                        response_json.to_string(),
-                    ));
-                } else {
-                    return Ok(response_json.to_string());
-                }
-            } else {
-                Err(get_error_response(
-                    "no status field in response from HSM".to_string(),
-                ))
-            }
-        }
+    } else {
+        Err(status::Custom(
+            Status::InternalServerError,
+            hsm::get_error_response("no status field in response from HSM".to_string()).to_string(),
+        ))
     }
-}
-
-fn get_error_response(message: String) -> status::Custom<String> {
-    status::Custom(
-        Status::InternalServerError,
-        json!({ "status": "error", "reason": message }).to_string(),
-    )
 }
 
 #[launch]
 fn rocket() -> _ {
     let token_label = "opencustody_slot";
     let token_pin = "12345678";
-    let user_type = hsm::UserType::NU;
+    let user_type = p11::CKU_USER;
 
     let hsm_connection;
     let r = hsm::HsmConnection::open(token_label, token_pin, user_type);
