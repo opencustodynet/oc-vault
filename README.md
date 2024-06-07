@@ -34,13 +34,13 @@ However, if your machine is not connected to a Luna HSM, you can use this comman
 cargo test --features lunahsm --no-run
 ```
 
-build for `lunahsm` (output: `target/debug/vault-proxy`):
+You can use this command to build for `lunahsm` (output: `target/debug/vault-proxy`):
 ```bash
 cargo build --features lunahsm
 ```
 
 ## `lunahsm_fm`
-Then, you can build `vault-core` as a FM module for Luna HSM using `build_fm.sh` script (output: `target/powerpc-unknown-linux-gnu/release/vault-core.bin`). This script compiles `vault-core` as a static library for powerpc, links it to the basic FM C library and builds it, and finally checks the final binary size to be sure that it is less than the Luna FM max size (8 MB).
+You can build `vault-core` as a FM module for Luna HSM using `build_fm.sh` script (output: `target/powerpc-unknown-linux-gnu/release/vault-core.bin`). This script compiles `vault-core` as a static library for powerpc, links it to the basic FM C library and builds it, and finally checks the final binary size to be sure that it is less than the Luna FM max size (8 MB).
 ```bash
 sh build_fm.sh
 ```
@@ -57,12 +57,13 @@ In this case, the output test binary is `vault_proxy-c09aef4c34f69215`. Rename i
 mv vault_proxy-c09aef4c34f69215 vault_proxy_test
 ```
 
-Then, copy `test_lunahsm.sh`, `vault-core.bin` and `vault_proxy_test` to the test machine that has Luna PCIe HSM, and run this command:
+Then, copy `test_lunahsm.sh`, `vault-core.bin` and `vault_proxy_test` to the test machine that has Luna PCIe HSM, and run this script:
 ```bash
 sh test_lunahsm.sh
 ```
+This script generates a code signing key pair on HSM, and signs the FM code. Then, it loads the signed FM code into HSM, and runs the test.
 
-To build `vault-proxy` release for Luna HSM FM, you can use this command (output: `target/release/vault-proxy`):
+To build `vault-proxy` release to use `lunahsm_fm`, you can use this command (output: `target/release/vault-proxy`):
 ```bash
 cargo build -p vault-proxy --release --features lunahsm_fm
 ```
